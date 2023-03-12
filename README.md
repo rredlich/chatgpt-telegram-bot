@@ -1,11 +1,13 @@
 # 🤖 Chatgpt Telegram bot
-Python script that connects a Telegram bot with OpenAI gpt-3.5 API. You can set the system prompt using the /start command and then send a user prompt writing a message.
+Python script that connects a Telegram bot with OpenAI gpt-3.5 and whisper API. You can set the system prompt using the /start command and then send a user prompt writing a message. Also, you can send voice messages to transcript it.
 
 # Requirements
 * Python 3.7.1
 * openai 0.27.0
 * python-telegram-bot 20.1
 * python-dotenv 0.21.1
+* pydub 0.25.1
+* ffprobe 0.5
 
 # Setup
 ## Set your env file
@@ -31,3 +33,4 @@ python3 main.py
 # How to use
 1. Find your bot and send the command /start to set the system prompt. This prompt set the context for the chatbot. By default, the system prompt is "You are a helpful assistant"
 2. Write a message to send a user prompt with the system prompt as context
+3. You can also send a voice message to get a transcription

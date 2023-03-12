@@ -1,5 +1,6 @@
 from dotenv import load_dotenv
 import os
+from pydub import AudioSegment
 import openai
 
 import logging
@@ -102,6 +103,25 @@ async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
     await context.bot.send_message(chat_id=update.effective_chat.id, text=completion.choices[0].message.content)
 
+async def transcript_audio(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Get the audio file and transcripts it using Whisper OpenAI API."""
+    chat_id = update.effective_chat.id
+
+    audio_file = await context.bot.get_file(update.message.voice.file_id)
+    await audio_file.download_to_drive(f"{chat_id}.ogg")
+    AudioSegment.from_file(f"{chat_id}.ogg").export(f"{chat_id}.mp3", format="mp3")
+    os.remove(f"{chat_id}.ogg")
+    audio_file= open(f"{chat_id}.mp3", "rb")
+    
+    try:
+        transcript = openai.Audio.transcribe("whisper-1", audio_file)
+    except:
+        await context.bot.send_message(chat_id=chat_id, text="Error en la transcripción")
+    
+    os.remove(f"{chat_id}.mp3")
+    
+    await context.bot.send_message(chat_id=chat_id, text=transcript['text'])
+
 async def show_sys_prompt(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Show the system prompt."""
     chat_id = update.effective_chat.id
@@ -122,10 +142,13 @@ if __name__ == '__main__':
     )
 
     chat_handler = MessageHandler(filters.TEXT & (~filters.COMMAND), chat)
+    audio_handler = MessageHandler(filters.VOICE, transcript_audio)
     sys_prompt_handler = CommandHandler('vocab', show_sys_prompt)
     
     application.add_handler(conv_handler)
     application.add_handler(chat_handler)
+    application.add_handler(audio_handler)
     application.add_handler(sys_prompt_handler)
+
     
     application.run_polling()
