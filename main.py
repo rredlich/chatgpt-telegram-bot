@@ -48,7 +48,7 @@ async def store_sys_prompt(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     global gpt_sys_prompt
     gpt_sys_prompt = update.message.text
     
-    logger.info("%s: Language of %s: %s", chat_id, user.first_name, gpt_sys_prompt)
+    logger.info("%s: %s: %s", chat_id, user.first_name, gpt_sys_prompt)
     
     await context.bot.send_message(
         chat_id=chat_id,
@@ -59,13 +59,13 @@ async def store_sys_prompt(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     return TEST_USER_PROMPT
 
 async def test_user_prompt(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """Send the first user promopt to OpenAI API."""
+    """Send the first user prompt to OpenAI API."""
     user = update.message.from_user
     chat_id = update.effective_chat.id
 
     gpt_user_prompt = update.message.text
     
-    logger.info("%s: Language of %s: %s", chat_id, user.first_name, gpt_user_prompt)
+    logger.info("%s: %s: %s", chat_id, user.first_name, gpt_user_prompt)
 
     completion = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
@@ -120,7 +120,16 @@ async def transcript_audio(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     os.remove(f"{chat_id}.mp3")
     
-    await context.bot.send_message(chat_id=chat_id, text=transcript['text'])
+    await context.bot.send_message(chat_id=chat_id, text=transcript['text']+" <i>transcrito de mensaje de voz</i>", parse_mode="HTML")
+
+    completion = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": f"{gpt_sys_prompt}"},
+            {"role": "user", "content": transcript['text']}
+        ]
+    )
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=completion.choices[0].message.content)
 
 async def show_sys_prompt(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Show the system prompt."""
